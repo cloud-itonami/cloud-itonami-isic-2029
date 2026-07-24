@@ -4,23 +4,32 @@
  ;; live in the kotoba-lang org of this workspace. This repo is
  ;; standalone (forkable outside the workspace); the :local/root paths
  ;; only resolve inside the monorepo checkout -- a standalone fork
- ;; should override them with git coordinates. langchain is pinned here
- ;; directly (not only under :dev) so a bare `clojure -M:test` works
- ;; offline inside the monorepo checkout without depending on
- ;; langgraph's own transitive git/sha pin being fetchable.
+ ;; should override them with git coordinates.
  :deps {io.github.kotoba-lang/langgraph
         {:local/root "../../kotoba-lang/langgraph"}
-        io.github.kotoba-lang/langchain
-        {:local/root "../../kotoba-lang/langchain"}}
+        io.github.kotoba-lang/robotics
+        {:local/root "../../kotoba-lang/robotics"}
+        ;; REAL engineering-simulation dependency (ADR-2607151600/
+        ;; ADR-2607152000 pattern): `adhesiveworks.robotics` builds
+        ;; physics-2d Body2D/Collider2D entities directly and steps them
+        ;; via `world-step` for the ASTM D1002 single-lap-joint shear
+        ;; bond-strength test. This vertical has no sibling design-
+        ;; library repo (unlike isic-2910/kami-engine-vehicle-designer),
+        ;; so the physics module lives directly in `adhesiveworks.
+        ;; robotics`, taking a real pinned git-coordinate dependency on
+        ;; `kotoba-lang/physics-2d` alone from day one -- the isic-2930/
+        ;; isic-2219/isic-2670 pattern, not the isic-2910 one.
+        io.github.kotoba-lang/physics-2d
+        {:git/url "https://github.com/kotoba-lang/physics-2d.git"
+         :sha "03b6c23c8d9aa36b92a8130fd3e37fc2548b4d26"}}
  :aliases
  {;; offline workspace dev -- pin transitive langchain to local checkout
-  ;; (kept for parity with sibling actors' deps.edn shape; redundant
-  ;; with the top-level :deps override above).
   :dev {:override-deps
         {io.github.kotoba-lang/langchain
          {:local/root "../../kotoba-lang/langchain"}}}
   ;; clojure -M:dev:run  -> drive the demo through one OperationActor
-  :run {:main-opts ["-m" "adhesivemfg.sim"]}
+  :run {:main-opts ["-m" "adhesiveworks.sim"]}
+  :export {:main-opts ["-m" "adhesiveworks.export-run"]}
   :test {:extra-paths ["test"]
          :extra-deps {io.github.cognitect-labs/test-runner
                       {:git/tag "v0.5.1" :git/sha "dfb30dd"}}

@@ -1,42 +1,50 @@
 {:itonami.blueprint/id "cloud-itonami-isic-2029"
  :itonami.blueprint/name "Manufacture of other chemical products n.e.c."
  :itonami.blueprint/isic-rev5 "2029"
- :itonami.blueprint/domain :adhesive/manufacturing
+ :itonami.blueprint/domain :adhesive/structural-bonding
  :itonami.blueprint/license "AGPL-3.0-or-later"
- :itonami.blueprint/social-impact [:worker-safety :consumer-safety :environmental-safety]
- :itonami.blueprint/governor :adhesive-plant-operations-governor
+ :itonami.blueprint/social-impact [:worker-safety :consumer-safety :vehicle-safety :supply-resilience]
+ :itonami.blueprint/governor :bond-strength-governor
  :itonami.blueprint/robotics true
- :itonami.blueprint/required-technologies [:robotics :identity :forms :dmn :bpmn :audit-ledger :cae :cfd]
- :itonami.blueprint/optional-technologies []
+ :itonami.blueprint/required-technologies [:robotics :cae :dmn :bpmn :audit-ledger]
+ :itonami.blueprint/optional-technologies [:cfd :telemetry]
  :itonami.blueprint/status :public-oss
  :itonami.blueprint/maturity :implemented
  :itonami.blueprint/implemented-slice
- "AdhesiveAdvisor ⊣ Adhesive Plant Operations Governor, langgraph-clj
- StateGraph, append-only audit ledger. A plant OPERATIONS COORDINATION
- actor for ISIC 2029 (manufacture of other chemical products n.e.c.),
- illustrated concretely by industrial/consumer adhesives and glues
- manufacturing (reaction/mixing via a batch reactor or mixing tank,
- plus filling/packaging lines producing hot-melt, solvent-based,
- water-based, pressure-sensitive, reactive-polyurethane, epoxy,
- cyanoacrylate, and rubber-based adhesive/glue products) -- not direct
- reactor/mixing-line-equipment control authority, and NOT a
- chemical-safety-certification authority. Four ops
- (`:log-production-batch` / `:schedule-maintenance` /
- `:flag-safety-concern` / `:coordinate-shipment`), all `:effect
- :propose` only. Thirteen concrete governor checks elaborate this
- blueprint's four HARD invariants: propose-only effect, closed op
- allowlist, closed proposal-effect allowlist (no direct reactor/mixing-
- line-equipment control), permanent reactor/mixing-line-equipment
- actuation block, permanent chemical-safety-certification-authority-
- decision block, independent equipment verification/registration
- before maintenance scheduling, independent batch verification/
- registration before shipment coordination, independent shipment-
- weight recompute against the batch's own logged weight, double-
- schedule guard, product-type validation, viscosity plausibility
- validation, purity plausibility validation, and purity-below-spec-
- floor validation (modeled on representative per-product-category
- minimum purity/solids-content specs). Safety-concern flagging
- (chemical-handling/reaction-hazard: toxicity, exposure risk,
- flammability, reactive-hazard) ALWAYS escalates to a human plant
- supervisor; `:log-production-batch` is the only op eligible to
- auto-commit, and only at phase 3 when governor-clean."}
+ "Adhesive Advisor ⊣ Bond-Strength Governor, langgraph-clj StateGraph,
+ MemStore+DatomicStore dual-backend append-only audit ledger. ISIC 2029
+ (manufacture of other chemical products n.e.c.) is a residual category;
+ this build scopes to ONE concrete, well-justified sub-scope --
+ structural adhesives/sealants manufacturing (NOT the whole broad
+ category) -- for a manufacturer producing both consumer-electronics-
+ grade adhesives (smartphone frame/battery/display bonding, thin-
+ bondline) and automotive-grade structural adhesives (body panel
+ bonding, battery-pack sealing, crash-durable bond lines). Subject is an
+ adhesive-batch. Six ops: `:adhesive-batch/intake` (phase 3 may
+ auto-commit when clean), `:bond-standard-rules/verify` (per-product-
+ class evidence checklist -- ASTM D1002 / SAE J1836 for automotive
+ structural bonding, IPC-CC-830 / UL 746C for electronics-grade
+ adhesive-bonded housings -- always human), `:end-of-line-quality/
+ screen` (cure-completeness/void/bondline-thickness defect screen, HARD
+ unconditional), `:robotics/simulate-lap-shear-test` (a NATIVE real
+ physics-2d time-stepped simulation of the ASTM D1002 single-lap-joint
+ shear bond-strength test using the collision-as-tension-limit
+ reinterpretation technique, always human), and dual actuation
+ `:actuation/issue-bond-certificate` / `:actuation/ship-adhesive-batch`
+ (both ALWAYS escalate, never auto-eligible at any phase, each with its
+ own dedicated boolean guard + append-only history + product-class-
+ scoped sequence number; a shipment additionally HARD-requires the bond
+ certificate already be on file). Eight concrete governor checks
+ elaborate this blueprint's invariants: spec-basis citation, evidence-
+ checklist completeness, robotics-simulation missing/independently-out-
+ of-tolerance (real ASTM D1002 lap-shear peak force vs. a disclosed
+ reasoned-engineering shear-strength band), cure-time-deviation
+ out-of-range (two-sided ground-truth range check), certificate-missing-
+ before-shipment, end-of-line-defect-unresolved (evaluated
+ unconditionally), already-shipped, and already-certified. This is the
+ shared upstream structural-adhesives stage feeding BOTH
+ cloud-itonami-isic-2630 (smartphone manufacturing) and
+ cloud-itonami-isic-2910/-2920 (motor-vehicle manufacturing), with a
+ three-way connection into cloud-itonami-isic-2720's battery-pack
+ sealing -- the final shared-materials actor closing out this session's
+ automotive/smartphone supply-web build-out."}
