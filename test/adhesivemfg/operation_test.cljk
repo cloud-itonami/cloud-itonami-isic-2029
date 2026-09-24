@@ -4,7 +4,7 @@
   (HARD holds, escalation, phase gating) is exercised in
   `adhesivemfg.governor-contract-test`; the Store contract in
   `adhesivemfg.store-contract-test`."
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [kotoba.test :refer [deftest is testing]]
             [langgraph.graph :as g]
             [adhesivemfg.operation :as op]
             [adhesivemfg.store :as store]))
