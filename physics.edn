@@ -1,0 +1,44 @@
+;; What this vertical's robot physically does, declared for
+;; kotoba.robotics.process (kotoba-lang/robotics). `kbb -M:dev:physics` runs it.
+;;
+;; The README has no "Robotics premise" section; its Scope picks one concrete
+;; plant within the residual ISIC 2029 class: industrial/consumer adhesives
+;; and glues, with reactor/mixing-line equipment and output-quality testing
+;; (viscosity, purity). The physical work of that plant taken here:
+;; pulling lap-shear test pieces on the QC tensile frame (the steel adherend
+;; must stay elastic for the bond-strength number to mean anything),
+;; pumping a viscous adhesive from the mixer to the filling station, and
+;; stacking filled pails.
+;;
+;; Every number without a cited source is marked `estimate` in its :basis.
+;; Replacing an estimate with a sourced value is this bot's growth work.
+{:physics/schema "itonami.physical-ai.spec.v1"
+ :repo "cloud-itonami/cloud-itonami-isic-2029"
+ :cases
+ [{:id :lap-shear-adherend
+   :kind :material
+   :procedure "QC robot loads a single-lap-joint test piece on the tensile frame; the 25 mm x 1.6 mm mild-steel adherend (100 mm free length) carries the joint's failure load"
+   :params {:length-m 0.10 :area-m2 4.0e-5 :youngs-modulus-pa 200.0e9 :yield-stress-pa 250.0e6
+            :hardening-pa 1.0e9 :density-kg-m3 7850.0}
+   :sweep {:param :max-force-n :values [4000.0 6000.0 8000.0 10000.0 12000.0]}
+   :quantity :final-strain
+   :limit {:max 0.002 :basis "estimate: adherend strain kept below 0.2 % so it stays elastic and the joint, not the adherend, is what is tested"}
+   :boundary {:lo 2000.0 :hi 16000.0}}
+  {:id :adhesive-to-filler
+   :kind :pipe-flow
+   :procedure "pump a solvent-free adhesive from the mixing vessel to the filling station (50 mm, 25 m, 2 m rise, 0.5 L/s)"
+   :params {:q-m3s 0.0005 :diameter-m 0.05 :length-m 25.0 :roughness-m 1.5e-6 :density-kg-m3 1200.0
+            :pump-efficiency 0.5 :elevation-m 2.0}
+   :sweep {:param :viscosity-pa-s :values [1.0 5.0 10.0 20.0 40.0]}
+   :quantity :pressure-drop-pa
+   :limit {:max 1000000.0 :basis "estimate: 10 bar discharge limit assumed for the gear pump on the filling line"}
+   :boundary {:lo 0.5 :hi 100.0}}
+  {:id :pail-stacking
+   :kind :manipulator
+   :procedure "arm lifts filled adhesive pails from the filling station onto the pallet"
+   :params {:l1-m 0.60 :l2-m 0.50 :m1-kg 9.0 :m2-kg 6.0
+            :from [0.75 0.15] :to [0.35 0.75] :duration-s 2.5 :steps 500}
+   :sweep {:param :payload-kg :values [5.0 10.0 15.0 20.0 25.0]}
+   :quantity :peak-tau1-nm
+   :limit {:max 300.0 :basis "estimate: continuous shoulder torque of a ~25 kg-payload palletising arm class"}
+   :boundary {:lo 1.0 :hi 80.0}}]}
